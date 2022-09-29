@@ -14,7 +14,7 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: ^1.18
-      - run: cd /tmp && go install github.com/Antonboom/nilnil@${{ env.GITHUB_REF_NAME }} && nilnil -h
+      - run: cd /tmp && go install github.com/laytan/unsafenil@${{ env.GITHUB_REF_NAME }} && unsafenil -h
 
   lint:
     runs-on: ubuntu-latest

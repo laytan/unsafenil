@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	name = "nilnil"
-	doc  = "Checks that there is no simultaneous return of `nil` error and an invalid value."
+	name = "unafenil"
+	doc  = "Checks that there is no return of a nil error or false, and a nil/default value before it"
 
-	reportMsg = "return both the `nil` error and invalid value: use a sentinel error instead"
+	reportMsg = "returns both a nil error or false, and a nil/default value before it"
 )
 
 // New returns new nilnil analyzer.
@@ -81,18 +81,30 @@ func (n *nilNil) run(pass *analysis.Pass) (interface{}, error) {
 		case *ast.ReturnStmt:
 			ft := fs.Top() // Current function.
 
-			if !push || len(v.Results) != 2 || ft == nil || ft.Results == nil || len(ft.Results.List) != 2 {
-				return false
-			}
-
-			fRes1, fRes2 := ft.Results.List[0], ft.Results.List[1]
-			if !(n.isDangerNilField(fRes1, typeSpecs) && n.isErrorField(fRes2)) {
+			if !push || ft == nil || ft.Results == nil {
 				return
 			}
 
-			rRes1, rRes2 := v.Results[0], v.Results[1]
-			if isNil(rRes1) && isNil(rRes2) {
-				pass.Reportf(v.Pos(), reportMsg)
+			if len(v.Results) < 2 || len(ft.Results.List) < 2 {
+				return
+			}
+
+			fResLast := ft.Results.List[len(ft.Results.List)-1]
+			if !n.isErrorField(fResLast) {
+				return
+			}
+
+			rResLast := v.Results[len(v.Results)-1]
+			if !isNil(rResLast) {
+				return
+			}
+
+			for i, res := range ft.Results.List[0 : len(ft.Results.List)-1] {
+				if n.isDangerNilField(res, typeSpecs) {
+					if isNil(v.Results[i]) {
+						pass.Reportf(v.Pos(), reportMsg)
+					}
+				}
 			}
 		}
 
@@ -132,11 +144,11 @@ func (n *nilNil) isDangerNilType(t ast.Expr, typeSpecs typeSpecByName) bool {
 }
 
 func (n *nilNil) isErrorField(f *ast.Field) bool {
-	return isIdent(f.Type, "error")
+	return isIdent(f.Type, "error") || isIdent(f.Type, "bool")
 }
 
 func isNil(e ast.Expr) bool {
-	return isIdent(e, "nil")
+	return isIdent(e, "nil") || isIdent(e, "false")
 }
 
 func isIdent(n ast.Node, name string) bool {

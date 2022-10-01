@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	name = "unafenil"
+	name = "unsafenil"
 	doc  = "Checks that there is no return of a nil error or false, and a nil/default value before it"
 
 	reportMsg = "returns both a nil error or false, and a nil/default value before it"

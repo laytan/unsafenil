@@ -148,7 +148,7 @@ func (n *nilNil) isErrorField(f *ast.Field) bool {
 }
 
 func isNil(e ast.Expr) bool {
-	return isIdent(e, "nil") || isIdent(e, "false")
+	return isIdent(e, "nil") || isIdent(e, "true")
 }
 
 func isIdent(n ast.Node, name string) bool {
